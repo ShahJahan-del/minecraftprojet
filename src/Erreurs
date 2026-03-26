@@ -1,0 +1,8 @@
+// S'il y a une erreur de tâche déjà lancée
+
+/* PS C:\Users\shahj\.rustup\projects\minecraftprojet> cargo run
+    Blocking waiting for file lock on package cache
+PS C:\Users\shahj\.rustup\projects\minecraftprojet> taskkill /IM cargo.exe /F
+Opération réussie : le processus "cargo.exe" de PID 43028 a été arrêté.
+Opération réussie : le processus "cargo.exe" de PID 82468 a été arrêté.
+*/
