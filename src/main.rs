@@ -123,6 +123,3 @@ fn main() {
     .add_systems(Startup, (generate_blocks, setup, display_blocks).chain())
     .run();
 }
-
-// test
-
