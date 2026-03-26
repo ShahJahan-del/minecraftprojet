@@ -6,3 +6,38 @@ PS C:\Users\shahj\.rustup\projects\minecraftprojet> taskkill /IM cargo.exe /F
 Opération réussie : le processus "cargo.exe" de PID 43028 a été arrêté.
 Opération réussie : le processus "cargo.exe" de PID 82468 a été arrêté.
 */
+
+/*
+
+Erreur : 
+
+    Finished `dev` profile [optimized + debuginfo] target(s) in 33.27s
+     Running `target\debug\minecraftprojet.exe`
+Hello World !
+2026-03-26T08:37:04.596796Z  INFO bevy_diagnostic::system_information_diagnostics_plugin::internal: SystemInfo { os: "Windows 11 Home", kernel: "26200", cpu: "AMD Ryzen 7 4700U with Radeon Graphics", core_count: "8", memory: "15.4 GiB" }
+2026-03-26T08:37:04.742193Z ERROR wgpu_hal::vulkan::instance: GENERAL [Loader Message (0x0)]
+        loader_get_json: Failed to open JSON file C:\ProgramData\obs-studio-hook\obs-vulkan64.json
+2026-03-26T08:37:04.742707Z ERROR wgpu_hal::vulkan::instance:   objects: (type: INSTANCE, hndl: 0x1f104e4da20, name: ?)
+2026-03-26T08:37:05.275413Z  INFO bevy_render::renderer: AdapterInfo { name: "AMD Radeon(TM) Graphics", vendor: 4098, device: 5686, device_type: IntegratedGpu, driver: "AMD proprietary driver", driver_info: "23.19.12 (AMD proprietary shader compiler)", backend: Vulkan }
+2026-03-26T08:37:06.261343Z  INFO bevy_render::batching::gpu_preprocessing: GPU preprocessing is fully supported on this device.
+2026-03-26T08:37:06.267265Z  INFO bevy_winit::system: Creating new window minecraftprojet (0v0)
+
+thread 'main' (70624) panicked at C:\Users\shahj\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\bevy_ecs-0.18.1\src\error\handler.rs:125:1:
+Encountered an error in system `<Enable the debug feature to see the name>`: Parameter `<Enable the debug feature to see the name>` failed validation: Resource does not exist
+If this is an expected state, wrap the parameter in `Option<T>` and handle `None` when it happens, or wrap the parameter in `If<T>` to skip the system when it happens.
+
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+Encountered a panic in system `<Enable the debug feature to see the name>`!
+error: process didn't exit successfully: `target\debug\minecraftprojet.exe` (exit code: 101)
+
+Solution (Ajouter dans main()) : 
+
+App::new()
+.insert_resource(WorldMap {
+            blocks: HashMap::new(),
+        })
+*/
+
+/*
+Pour optimiser la compilation : cargo run --release
+*/

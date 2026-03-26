@@ -117,9 +117,12 @@ fn main() {
     println!("Hello World !");
     App::new()
     .add_plugins(DefaultPlugins)
-    .add_systems(Startup, (generate_blocks, setup).chain())
+    .insert_resource(WorldMap {
+            blocks: HashMap::new(),
+        })
+    .add_systems(Startup, (generate_blocks, setup, display_blocks).chain())
     .run();
 }
 
-// test
-// test benaboul !
+
+
