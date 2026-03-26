@@ -78,7 +78,10 @@ fn display_blocks(
 }
 
 /// Fonction Setup : set up a simple 3D scene (lumière et caméra), fonction trouvée dans les exemples Bevy
-fn setup(
+
+// Code pour un sol circulaire
+
+/* fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
@@ -110,8 +113,69 @@ fn setup(
         Transform::from_xyz(-2.5, 4.5, 9.0).looking_at(Vec3::ZERO, Vec3::Y),
     ));
 }
+*/
 
 // 5) Fonctions caméra, lumière, meshes et matériaux
+
+// Code pour un sol plat
+
+#[derive(Component)]
+struct Ground;
+
+fn setup(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    // plane
+    commands.spawn((
+        Mesh3d(meshes.add(Plane3d::default().mesh().size(20., 20.))),
+        MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
+        Ground,
+    ));
+
+    // light
+    commands.spawn((
+        DirectionalLight::default(),
+        Transform::from_translation(Vec3::ONE).looking_at(Vec3::ZERO, Vec3::Y),
+    ));
+
+    // camera
+    commands.spawn((
+        Camera3d::default(),
+        Transform::from_xyz(15.0, 5.0, 15.0).looking_at(Vec3::ZERO, Vec3::Y),
+    ));
+}
+
+// 6) Système d’interaction = Bouger la caméra, Casser, marcher, collecter → pattern match sur Components ?
+
+
+fn draw_cursor(
+    camera_query: Single<(&Camera, &GlobalTransform)>,
+    ground: Single<&GlobalTransform, With<Ground>>,
+    window: Single<&Window>,
+    mut gizmos: Gizmos,
+) {
+    let (camera, camera_transform) = *camera_query;
+
+    if let Some(cursor_position) = window.cursor_position()
+        // Calculate a ray pointing from the camera into the world based on the cursor's position.
+        && let Ok(ray) = camera.viewport_to_world(camera_transform, cursor_position)
+        // Calculate if and where the ray is hitting the ground plane.
+        && let Some(point) = ray.plane_intersection_point(ground.translation(), InfinitePlane3d::new(ground.up()))
+    {
+        // Draw a circle just above the ground plane at that position.
+        gizmos.circle(
+            Isometry3d::new(
+                point + ground.up() * 0.01,
+                Quat::from_rotation_arc(Vec3::Z, ground.up().as_vec3()),
+            ),
+            0.2,
+            Color::WHITE,
+        );
+    }
+}
+
 
 fn main() {
     println!("Hello World !");
@@ -121,5 +185,6 @@ fn main() {
             blocks: HashMap::new(),
         })
     .add_systems(Startup, (generate_blocks, setup, display_blocks).chain())
+    .add_systems(Update, draw_cursor)
     .run();
 }
