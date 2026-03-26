@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use std::collections::HashMap;
 use bevy::camera::Camera3d;
 use bevy::light::AmbientLight;
+use rand::prelude::*;
 
 /*
 
@@ -11,6 +12,7 @@ use bevy::light::AmbientLight;
 2) Créer Block Component + BlockType + propriétés = Enum BlockType → différentes textures et comportements
 
 3) Système de “spawn des blocs” au Startup = Remplit la Resource et/ou crée les Entities
+-> la génération aléatoire se fait là
 
 4) Système de rendu = Parcourt la Resource ou les Entities et affiche les blocs
 
@@ -42,12 +44,34 @@ enum BlockType {
     Stone
 }
 
-// 3) Fonction spawn blocs
+// 3) Fonction spawn blocs (génération aléatoire)
 
-fn generate_blocks(mut world:ResMut<WorldMap>) { // fonction(mut instance de la structure <WorldMap>)
-    world.blocks.insert((0, 0, 0), BlockType::Dirt); // accès au champ "Blocks" de "world" et spawn avec des paramètres précis 
+// Version avec les coordonnées précises
+
+/*fn generate_blocks(mut world:ResMut<WorldMap>) { // fonction(mut instance de la structure <WorldMap>)
+    world.blocks.insert((0, 0, 0), BlockType::Dirt); // accès au champ "Blocks" de "world" et spawn avec des paramètres précis (coordonnées, texture)
     world.blocks.insert((1, 0, 0), BlockType::Wood);
     world.blocks.insert((2, 0, 0), BlockType::Stone);
+}
+*/
+
+// Version avec génération aléatoire
+
+// use rand::Rng;
+
+fn generate_blocks(mut world: ResMut<WorldMap>) {
+    let mut rng = rand::thread_rng();
+    let size = 20;
+
+    for x in -size..size {
+        for z in -size..size {
+            let height = rng.gen_range(0..3); // hauteur aléatoire
+
+            for y in 0..=height {
+                world.blocks.insert((x, y, z), BlockType::Dirt);
+            }
+        }
+    }
 }
 
 // 4) Fonction d'affichage des blocs
