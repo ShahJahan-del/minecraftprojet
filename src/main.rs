@@ -120,5 +120,3 @@ fn main() {
     .add_systems(Startup, (generate_blocks, setup).chain())
     .run();
 }
-
-// test
