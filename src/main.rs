@@ -171,7 +171,7 @@ fn setup(
     ));
 }
 
-// 6) Système d’interaction = Bouger la caméra, Casser, marcher, collecter → pattern match sur Components ?
+// 6) Système d’interaction = Bouger la caméra, se déplacer, casser, collecter → pattern match sur Components ?
 
 
 fn draw_cursor(
