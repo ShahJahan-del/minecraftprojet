@@ -41,3 +41,33 @@ App::new()
 /*
 Pour optimiser la compilation : cargo run --release
 */
+
+/*
+
+Erreur : use of unresolved module or unlinked crate `rand`
+
+Explication : pour utiliser une dépendance (ici rand), il faut l'ajouter dans le .toml
+mais surtout il faut le mettre au bon endroit 
+
+Exemple :
+
+# Enable a large amount of optimization in the dev profile for dependencies.
+[profile.dev.package."*"]
+opt-level = 3
+
+rand = "0.8"
+rand_core = "0.10"
+bevy_rand = "0.14"
+bevy_prng = { version = "0.14", features = ["chacha20", "wyrand"] }
+
+-> Ce n'est pas bon car rand est mis dans [profile.dev.package."*"]
+-> Il faut écrire :
+
+[dependencies]
+rand = "0.8"
+rand_core = "0.10"
+bevy_rand = "0.14"
+bevy_prng = { version = "0.14", features = ["chacha20", "wyrand"] }
+
+
+*/
