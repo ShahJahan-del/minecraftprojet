@@ -2,6 +2,8 @@
 use std::f32::consts::FRAC_PI_2;
 use bevy::{color::palettes::tailwind, input::mouse::AccumulatedMouseMotion, prelude::*};
 
+// Main
+
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
@@ -45,6 +47,8 @@ fn main() {
         )
         .run();
 }
+
+// Fonctions
 
 /// A vector representing the player's input, accumulated over all frames that ran
 /// since the last time the physics simulation was advanced.
