@@ -205,7 +205,7 @@ fn setup(
     )); */
 }
 
-// 6) (Code fourni par Bevy) Système d’interaction = Bouger la caméra, se déplacer, casser, collecter → pattern match sur Components ?
+// 6) Système d’interaction = Bouger la caméra, se déplacer, casser, collecter → pattern match sur Components ?
 
 
 fn draw_cursor(
@@ -454,7 +454,7 @@ fn translate_camera(
     camera.translation = player.translation;
 }
 
-// 7) Création de menus et boutons
+// 7) Création de menus
 /*
 - Création des états (derive Ingame et Menu)
 - Init des états dans le main
@@ -698,6 +698,7 @@ fn generate_seed(mut seed: ResMut<WorldSeed>) {
     println!("Seed: {}", seed.0);
 }
 
+/*
 fn main() {
     println!("Hello World !");
     App::new()
@@ -770,3 +771,4 @@ fn main() {
 
     .run();
 }
+    */

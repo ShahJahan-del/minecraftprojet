@@ -70,4 +70,9 @@ bevy_rand = "0.14"
 bevy_prng = { version = "0.14", features = ["chacha20", "wyrand"] }
 
 
+Erreur : le code dans ingame_interactions ne veut pas se modifier dans le compilateur, ce qui génère des erreurs
+
+Modifier manuellement dans le terminal : (Get-Content src\main.rs) -replace 'mut interaction_query: Query$', 'mut interaction_query: Query<' | Set-Content src\main.rs
+
+
 */

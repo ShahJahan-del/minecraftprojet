@@ -5,8 +5,6 @@ use bevy::light::AmbientLight;
 use rand::prelude::*;
 use std::f32::consts::FRAC_PI_2;
 use bevy::{color::palettes::tailwind, input::mouse::AccumulatedMouseMotion, prelude::*};
-use rand::Rng;
-use rand::SeedableRng;
 
 /*
 
@@ -24,11 +22,11 @@ use rand::SeedableRng;
 
 6) Système d’interaction = Casser, marcher, collecter → pattern match sur Components
 
+6) Plugins
+
 - WorldPlugin pour gérer la carte et spawn
 - RenderPlugin pour dessiner les blocs
 - PlayerPlugin pour déplacer et interagir
-
-7) Création d'un menu pour la génération de graine (menu+jeu)
 
 */ 
 
@@ -63,45 +61,29 @@ enum BlockType {
 
 // use rand::Rng;
 
-fn generate_blocks(mut world: ResMut<WorldMap>, seed: Res<WorldSeed>) {
-    world.blocks.clear();
-    let mut rng = rand::rngs::StdRng::seed_from_u64(seed.0);
+fn generate_blocks(mut world: ResMut<WorldMap>) {
 
-    let size = 20;
+    // Logique de génération :
+    // 1/ on désigne les coordonnées = de (-size, -size, 0) à (size, size, height), c'est la taille du monde/écran
+    // 2/ selon la hauteur (height) où se trouve le bloc, on définit sa texxture = Wood (haut), Dirt (milieu), Stone (bas) 
+    // 3/ on ajoute les blocs dans le world
+
+    let mut rng = rand::thread_rng();
+    let size = 20; // à mettre en variable globale ou champ de l'enum bloc ?
 
     for x in -size..size {
         for z in -size..size {
-
-            // Hauteur de base avec bruit pseudo-aléatoire
-            let noise1 = ((x as f32 * 0.3).sin() * (z as f32 * 0.2).cos()) * 4.0;
-            let noise2 = ((x as f32 * 0.7).cos() * (z as f32 * 0.5).sin()) * 2.0;
-            let random_offset = rng.gen_range(-1.0..1.0_f32);
-            let height = (noise1 + noise2 + random_offset).max(0.0) as i32 + 1;
+            let height = rng.gen_range(0..3); // hauteur aléatoire (si on mettait -size..size, le bloc généré remplirait tout l'écran et on serait "dans le bloc")
 
             for y in 0..=height {
-                let block = if y == height {
-                    // Surface : Stone ou Wood selon position
-                    match rng.gen_range(0..3) {
-                        0 => BlockType::Stone,
-                        _ => BlockType::Wood,
-                    }
-                } else if y > height - 3 {
-                    // Couche intermédiaire : Dirt ou Stone
-                    if rng.gen_bool(0.7) {
-                        BlockType::Dirt
-                    } else {
-                        BlockType::Stone
-                    }
-                } else {
-                    // Profondeur : Stone avec quelques veines de Dirt
-                    if rng.gen_bool(0.1) {
-                        BlockType::Dirt
-                    } else {
-                        BlockType::Stone
-                    }
-                };
 
-                world.blocks.insert((x, y as isize, z), block);
+                let block = if y == height {
+                    BlockType::Wood
+                } else if y > height - 2 {
+                    BlockType::Dirt
+                } else { BlockType::Stone };
+
+                world.blocks.insert((x, y, z), block);
             }
         }
     }
@@ -130,7 +112,6 @@ fn display_blocks(
             Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 1.0))),
             MeshMaterial3d(materials.add(color)),
             Transform::from_xyz(x as f32, y as f32, z as f32),
-            WorldBlock,
         ));
     }
 }
@@ -205,7 +186,7 @@ fn setup(
     )); */
 }
 
-// 6) (Code fourni par Bevy) Système d’interaction = Bouger la caméra, se déplacer, casser, collecter → pattern match sur Components ?
+// 6) Système d’interaction = Bouger la caméra, se déplacer, casser, collecter → pattern match sur Components ?
 
 
 fn draw_cursor(
@@ -454,265 +435,18 @@ fn translate_camera(
     camera.translation = player.translation;
 }
 
-// 7) Création de menus et boutons
-/*
-- Création des états (derive Ingame et Menu)
-- Init des états dans le main
-- UI du menu (setup_menu)
-- Système de boutons (menu_interactions)
-- Clean le menu quand on lance le monde (cleanup_menu)
-- Lancement du monde 
-- Choix système selon l'état
-- Génération de la graine (resource et generate_seed)
-*/
-
-#[derive(States, Debug, Clone, PartialEq, Eq, Hash, Default)]
-enum GameState {
-    #[default]
-    Menu,
-    InGame,
-}
-#[derive(Component)]
-struct MenuUI;
-#[derive(Component)]
-struct SeedText;
-
-#[derive(Component)]
-enum MenuButton {
-    Play,
-    NewSeed,
-    Quit
-}
-#[derive(Resource)]
-struct WorldSeed(u64);
-#[derive(Component)]
-struct InGameUI;
-#[derive(Component)]
-struct WorldBlock;
-
-fn spawn_button(
-    parent: &mut ChildSpawnerCommands,
-    label: &str,
-    action: MenuButton
-) {
-    parent.spawn((
-        Button,
-        Node {
-            width: Val::Px(200.0),
-            height: Val::Px(60.0),
-            justify_content: JustifyContent::Center,
-            align_items: AlignItems::Center,
-            ..default()
-        },
-        BackgroundColor(Color::srgb(0.2, 0.2, 0.8)),
-        action,
-        MenuUI,
-    ))
-    .with_children(|parent: &mut ChildSpawnerCommands| {
-        parent.spawn((
-            Text::new(label),
-            TextFont {
-                font_size: 20.0,
-                ..default()
-            },
-            TextColor(Color::WHITE),
-        ));
-    });
-}
-
-
-fn setup_menu(mut commands: Commands, seed: Res<WorldSeed>) {
-    commands.spawn((Camera2d, MenuUI));
-
-    commands.spawn((
-        Node {
-            width: Val::Percent(100.0),
-            height: Val::Percent(100.0),
-            flex_direction: FlexDirection::Column,
-            justify_content: JustifyContent::Center,
-            align_items: AlignItems::Center,
-            row_gap: Val::Px(15.0),
-            ..default()
-        },
-        MenuUI,
-    ))
-    .with_children(|parent: &mut ChildSpawnerCommands| {
-
-        // Texte Seed
-        parent.spawn((
-            Text::new(format!("Seed: {}", seed.0)),
-            TextFont {
-                font_size: 30.0,
-                ..default()
-            },
-            TextColor(Color::WHITE),
-            SeedText,
-            MenuUI,
-        ));
-
-        // Bouton "Play"
-        spawn_button(parent, "Play", MenuButton::Play);
-
-        // Bouton "New Seed"
-        spawn_button(parent, "New Seed", MenuButton::NewSeed);
-
-        // Bouton "Quit"
-        spawn_button(parent, "Quit", MenuButton::Quit);
-    });
-}
-
-fn setup_ingame_ui(mut commands: Commands) {
-    commands.spawn((
-        Node {
-            position_type: PositionType::Absolute,
-            top: Val::Px(10.0),
-            left: Val::Px(10.0),
-            ..default()
-        },
-        InGameUI,
-    ))
-    .with_children(|parent: &mut ChildSpawnerCommands| {
-        parent.spawn((
-            Button,
-            Node {
-                width: Val::Px(120.0),
-                height: Val::Px(40.0),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                ..default()
-            },
-            BackgroundColor(Color::srgb(0.8, 0.2, 0.2)),
-            MenuButton::Quit,
-            InGameUI,
-        ))
-        .with_children(|parent: &mut ChildSpawnerCommands| {
-            parent.spawn((
-                Text::new("Quit"),
-                TextFont {
-                    font_size: 18.0,
-                    ..default()
-                },
-                TextColor(Color::WHITE),
-            ));
-        });
-    });
-}
-
-fn menu_interactions(
-    mut interaction_query: Query<
-        (&Interaction, &mut BackgroundColor, &MenuButton),
-        (Changed<Interaction>, With<Button>)
-    >,
-    mut next_state: ResMut<NextState<GameState>>,
-    mut seed: ResMut<WorldSeed>,
-    mut text_query: Query<&mut Text, With<SeedText>>,
-) {
-    for (interaction, mut color, button_type) in &mut interaction_query {
-        match *interaction {
-            Interaction::Pressed => {
-                match button_type {
-                    MenuButton::Play => {
-                        next_state.set(GameState::InGame);
-                    }
-
-                    MenuButton::NewSeed => {
-                        seed.0 = rand::random::<u64>();
-                        println!("New seed: {}", seed.0);
-
-                        // update texte
-                        if let Ok(mut text) = text_query.single_mut() {
-                            *text = Text::new(format!("Seed: {}", seed.0));
-                        }
-                    }
-
-                    MenuButton::Quit => {
-                        next_state.set(GameState::Menu);
-                    }
-                }
-            }
-
-            Interaction::Hovered => {
-                *color = BackgroundColor(Color::srgb(0.4, 0.4, 0.4));
-            }
-
-            Interaction::None => {
-                *color = BackgroundColor(Color::srgb(0.2, 0.2, 0.2));
-            }
-        }
-    }
-}
-
-fn ingame_interactions(
-    mut interaction_query: Query<
-        (&Interaction, &mut BackgroundColor, &MenuButton),
-        (Changed<Interaction>, With<Button>)
-    >,
-    mut next_state: ResMut<NextState<GameState>>,
-) {
-    for (interaction, mut color, button_type) in &mut interaction_query {
-        match *interaction {
-            Interaction::Pressed => {
-                match button_type {
-                    MenuButton::Quit => {
-                        next_state.set(GameState::Menu);
-                    }
-                    _ => {}
-                }
-            }
-            Interaction::Hovered => {
-                *color = BackgroundColor(Color::srgb(0.4, 0.4, 0.4));
-            }
-            Interaction::None => {
-                *color = BackgroundColor(Color::srgb(0.8, 0.2, 0.2));
-            }
-        }
-    }
-}
-
-fn cleanup_menu(mut commands: Commands, query: Query<Entity, With<MenuUI>>) {
-    for entity in &query {
-        commands.entity(entity).despawn();
-    }
-}
-
-fn cleanup_world(
-    mut commands: Commands,
-    query: Query<Entity, With<WorldBlock>>,
-) {
-    for entity in &query {
-        commands.entity(entity).despawn();
-    }
-}
-
-fn cleanup_ingame_ui(
-    mut commands: Commands,
-    query: Query<Entity, With<InGameUI>>,
-) {
-    for entity in &query {
-        commands.entity(entity).despawn();
-    }
-}
-
-fn generate_seed(mut seed: ResMut<WorldSeed>) {
-    seed.0 = rand::random::<u64>();
-    println!("Seed: {}", seed.0);
-}
-
-fn main() {
+/*fn main() {
     println!("Hello World !");
     App::new()
-
-    // Génération du monde
     .add_plugins(DefaultPlugins)
     .insert_resource(WorldMap {
             blocks: HashMap::new(),
         })
-    //déplacé dans création de menu : .add_systems(Startup, (generate_blocks, setup, display_blocks).chain())
+    .add_systems(Startup, (generate_blocks, setup, display_blocks).chain())
     .add_systems(Update, draw_cursor)
 
-    // Déplacement joueur
     .init_resource::<DidFixedTimestepRunThisFrame>()
-        .add_systems(Startup, spawn_player)
+        .add_systems(Startup, (spawn_player))
         // At the beginning of each frame, clear the flag that indicates whether the fixed timestep has run this frame.
         .add_systems(PreUpdate, clear_fixed_timestep_flag)
         // At the beginning of each fixed timestep, set the flag that indicates whether the fixed timestep has run this frame.
@@ -749,24 +483,6 @@ fn main() {
                     .in_set(RunFixedMainLoopSystems::AfterFixedMainLoop),
             ),
         )
-
-    // Création de menu et boutons
-    .init_state::<GameState>()
-    .insert_resource(WorldSeed(0))
-        .add_systems(OnEnter(GameState::Menu), setup_menu)
-    .add_systems(Update, menu_interactions.run_if(in_state(GameState::Menu)))
-    .add_systems(Update, ingame_interactions.run_if(in_state(GameState::InGame)))
-    .add_systems(OnExit(GameState::Menu), cleanup_menu)
-    .add_systems(OnEnter(GameState::InGame), (
-    setup,
-    generate_blocks,
-    display_blocks,
-    setup_ingame_ui,
-    ))
-    .add_systems(OnExit(GameState::InGame), (
-        cleanup_world,
-        cleanup_ingame_ui,
-    ))
-
     .run();
 }
+*/
