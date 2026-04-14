@@ -456,11 +456,11 @@ fn translate_camera(
 
 // 7) Création de menus et boutons
 /*
-- Création des états (derive Ingame et Menu)
+- Création des états et composants
 - Init des états dans le main
-- UI du menu (setup_menu)
-- Système de boutons (menu_interactions)
-- Clean le menu quand on lance le monde (cleanup_menu)
+- UI du menu (setup_menu et setup_ingame_ui)
+- Système de boutons (menu_interactions et ingame_interactions)
+- Clean le menu quand on lance le monde, clean le monde et l'ui en revenant au menu (cleanup_menu, cleanup_world, cleanup_ingame_ui )
 - Lancement du monde 
 - Choix système selon l'état
 - Génération de la graine (resource et generate_seed)
